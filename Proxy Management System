@@ -1,0 +1,260 @@
+import java.util.*;
+
+public class Main {
+
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
+        int choice;
+        System.out.println("Enter total number of teachers working in your organisation:");
+        int n = scan.nextInt();
+        System.out.println("Enter total number of lectures your organisation has:");
+        int l = scan.nextInt();
+        System.out.println("If teacher has no lecture type null.");
+        Lectures[] teacher = new Lectures[n];
+        for (int i = 0; i < n; i++) {
+            teacher[i] = new Lectures(l); // Pass 'l' to the Lectures constructor
+            teacher[i].accept(i, scan);
+            teacher[i].lectures(scan, l);
+        }
+        ArrayList<String> absentTeachers = new ArrayList<>();
+        DisplayTeacher display = new DisplayTeacher();
+        AbFaculty faculty = new AbFaculty();
+        Alot alot = new Alot();
+        do {
+            System.out.println("Enter your choice (1 for continue, 0 to exit):");
+            choice = scan.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Enter total number of teachers that are absent today:");
+                    int total = scan.nextInt();
+                    display.displayDetails(teacher);
+                    System.out.println("Choose \n1. If you want to enter name\n2. If you want to enter id ");
+                    int ch = scan.nextInt();
+                    switch (ch) {
+                        case 1:
+                            System.out.println("Enter name of absent teacher:");
+                            for (int i = 0; i < total; i++) {
+                                String name = scan.next();
+                                faculty.search(name, teacher, absentTeachers);
+                            }
+                            System.out.println("Today's list of absent teachers are: " + absentTeachers);
+                            break;
+                        case 2:
+                            System.out.println("Enter id of absent teacher:");
+                            for (int i = 0; i < total; i++) {
+                                int tid = scan.nextInt();
+                                faculty.search(tid, teacher, absentTeachers);
+                            }
+                            System.out.println("Today's list of absent teachers are: " + absentTeachers);
+                            break;
+                        default:
+                            System.out.println("Invalid choice!");
+                            break;
+                    }
+                    alot.findReplacement(teacher, absentTeachers, l, n);
+                    break;
+                case 0:
+                    System.out.println("Have a nice day!");
+                    break;
+                default:
+                    System.out.println("Invalid choice!");
+                    break;
+            }
+        } while (choice != 0);
+        scan.close();
+    }
+}
+
+class Teacher {
+    String name;
+    int id;
+    String email;
+    String subject;
+    String section;
+
+    void accept(int i, Scanner scan) {
+        System.out.println("Enter details for Teacher " + (i + 1) + ":");
+        System.out.print("Name:");
+        name = scan.next();
+        System.out.print("ID(integer only):");
+        id = scan.nextInt();
+        System.out.print("Email:");
+        email = scan.next();
+        System.out.println("Enter the subject:");
+        subject = scan.next();
+        System.out.println("Enter the section:");
+        section = scan.next();
+    }
+}
+
+class Lectures extends Teacher {
+    String[] lectures;
+
+    public Lectures(int numLectures) {
+        this.lectures = new String[numLectures]; // Initialize the lectures array with the correct size
+    }
+
+    public void setLectureDetails(int lectureNumber, String details) {
+        // Subtract 1 from lectureNumber because array indices start from 0
+        lectures[lectureNumber - 1] = details;
+    }
+
+    public void lectures(Scanner scan, int numLectures) {
+        for (int j = 1; j <= numLectures; j++) {
+            System.out.println("Enter details for Lecture " + j + ":");
+            String lectureDetails = scan.next();
+            setLectureDetails(j, lectureDetails);
+        }
+    }
+}
+
+class DisplayTeacher {
+    void displayDetails(Lectures[] teacher) {
+        for (Lectures teachers : teacher) {
+            System.out.println("Teacher Name: " + teachers.name);
+            System.out.println("Teacher ID: " + teachers.id);
+        }
+    }
+}
+
+class AbFaculty {
+    void search(String name, Lectures[] teacher, ArrayList<String> absentTeachers) {
+        boolean found = false;
+        for (Lectures teachers : teacher) {
+            if (teachers.name.equals(name)) {
+                absentTeachers.add(name);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("Teacher with such name not found");
+        }
+    }
+
+    void search(int tid, Lectures[] teacher, ArrayList<String> absentTeachers) {
+        boolean found = false;
+        for (Lectures teachers : teacher) {
+            if (teachers.id == (tid)) {
+                absentTeachers.add(teachers.name);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("Teacher with such id not found");
+        }
+    }
+}
+
+class Alot {
+
+    void findReplacement(Lectures[] teachers, ArrayList<String> absentTeachers, int l, int n) {
+        String sec="null";
+        String sub="null";
+        ArrayList<String> availableTeachers = new ArrayList<>();
+        ArrayList<Integer> countlec=new ArrayList<>();
+        ArrayList<String> shortlist = new ArrayList<>();
+        ArrayList<String> sectionshortlist = new ArrayList<>();
+        ArrayList<String> subjectshortlist = new ArrayList<>();
+        for (String absentTeacher : absentTeachers) {
+            for (Lectures teacher : teachers) {
+                if (absentTeacher.equals(teacher.name)) {
+                    for (int j = 0; j < l; j++) {
+                        String lecturename = "Lecture" + (j + 1);
+                        if (!teacher.lectures[j].equals("null")) {
+                            for (Lectures t : teachers) {
+                                if (t.lectures[j].equals("null")){
+                                    availableTeachers.add(t.name);
+                                }
+                            }
+                        }
+                        if(availableTeachers.size()>0){
+                            int count=0;
+                            for(int k=0;k< availableTeachers.size();k++){
+                                for(Lectures t2:teachers){
+                                    if(availableTeachers.get(k).equals(t2.name)){
+                                        if (!teacher.lectures[j].equals("null")){
+                                            count++;
+                                        }
+                                    }
+                                }
+                                countlec.add(count);
+                            }
+                            if (!countlec.isEmpty()) {
+                                int min = countlec.get(0);
+                                for (int m = 0; m < countlec.size(); m++) {
+                                    if (countlec.get(m) < min) {
+                                        min = countlec.get(m);
+                                    }
+                                }
+                                for (int m = 0; m < countlec.size(); m++) {
+                                    if (countlec.get(m) == min) {
+                                        if (m < availableTeachers.size()) {
+                                            shortlist.add(availableTeachers.get(m));
+                                        } else {
+                                            System.out.println("Error: Index out of bounds in availableTeachers.");
+                                        }
+                                    }
+                                }
+                            } else {
+                                System.out.println("Error: No count values in countlec.");
+                            }
+                            if(shortlist.size()>0) {
+                                for (Lectures t3 : teachers) {
+                                    if (absentTeacher.equals(t3.name)) {
+                                        sec = t3.section;
+                                    }
+                                }
+                                for (int s = 0; s < shortlist.size(); s++) {
+                                    for (Lectures t4 : teachers) {
+                                        if (shortlist.get(s).equals(t4.name))
+                                        {
+                                            if(!t4.section.equals(sec)){
+                                                sectionshortlist.add(shortlist.get(s));
+                                            }
+                                        }
+                                    }
+                                }
+                                if(sectionshortlist.size()>0){
+                                    for (Lectures t3 : teachers) {
+                                        if (absentTeacher.equals(t3.name)) {
+                                            sub = t3.subject;
+                                        }
+                                    }
+                                    for (int s = 0; s < shortlist.size(); s++) {
+                                        for (Lectures t4 : teachers) {
+                                            if (shortlist.get(s).equals(t4.name)) {
+                                                if (!t4.subject.equals(sec)) {
+                                                    subjectshortlist.add(sectionshortlist.get(s));
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(subjectshortlist.isEmpty()){
+                                        System.out.println("Lecture"+(j+1)+"is alloted to: "+sectionshortlist.get(0)+" on class "+teacher.lectures[j]);
+                                    }
+                                    else{
+                                        System.out.println("Lecture"+(j+1)+"is alloted to:"+subjectshortlist.get(0)+" on class "+teacher.lectures[j]);
+                                    }
+                                }
+                                else{
+                                    System.out.println("Lecture"+(j+1)+"is alloted to:"+shortlist.get(0)+" on class "+teacher.lectures[j] );
+                                }
+                            }
+                            else{
+                                System.out.println("Lecture"+(j+1)+"is alloted to:"+availableTeachers.get(0)+" on class "+teacher.lectures[j] );
+                            }
+                        }
+
+                        countlec.clear();
+                        availableTeachers.clear();
+                        shortlist.clear();
+                        sectionshortlist.clear();
+                        subjectshortlist.clear();
+                    }
+                }
+            }
+        }
+    }
+}
+
